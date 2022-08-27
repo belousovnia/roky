@@ -15,7 +15,10 @@
           zoom="10"
           style="width: 100%; height: 400px"
         >
-
+          <ymap-marker 
+            marker-id="123" 
+            :coords="cord"
+          />
         </yandex-map>
       </div>
     </main>
@@ -32,10 +35,10 @@ export default {
   data: () => ({
     city: null,
     input: null,
-    cord: [55.72, 37.65],
+    cord: ["55.7538789","37.6203735"],
     data: null,
     settings: {
-      apiKey: '',
+      apiKey: '5f6e7a79-975f-48f8-8438-b45713ff6a84',
       lang: 'ru_RU',
       coordorder: 'latlong',
       enterprise: false,
@@ -49,10 +52,21 @@ export default {
     }, 
     new Map());
     this.city = dataCity.map((i) => i['Город'] || i['Регион']);
+
+    const saveInput =  localStorage.getItem('input');
+    const saveCord =  localStorage.getItem('cord');
+    
+    if (saveInput) this.input = saveInput;
+    if (saveCord) this.cord = JSON.parse(saveCord);
   },
   watch: {
     input(i) {
-      if (i) this.cord = this.data.get(i);
+      localStorage.setItem('input', i);
+      if (i) {
+        const newCord = this.data.get(i);
+        this.cord = newCord;
+        localStorage.setItem('cord', JSON.stringify(newCord));
+      };
     }
   },
 };
