@@ -11,13 +11,13 @@
         </v-autocomplete>
         <yandex-map 
           :settings="settings"
-          :coords="cord"
+          :coords="coords"
           zoom="10"
           style="width: 100%; height: 400px"
         >
           <ymap-marker 
             marker-id="123" 
-            :coords="cord"
+            :coords="coords"
           />
         </yandex-map>
       </div>
@@ -35,7 +35,7 @@ export default {
   data: () => ({
     city: null,
     input: null,
-    cord: ["55.7538789","37.6203735"],
+    coords: ["55.7538789","37.6203735"],
     data: null,
     settings: {
       apiKey: '5f6e7a79-975f-48f8-8438-b45713ff6a84',
@@ -54,18 +54,18 @@ export default {
     this.city = dataCity.map((i) => i['Город'] || i['Регион']);
 
     const saveInput =  localStorage.getItem('input');
-    const saveCord =  localStorage.getItem('cord');
+    const saveCord =  localStorage.getItem('coords');
     
     if (saveInput) this.input = saveInput;
-    if (saveCord) this.cord = JSON.parse(saveCord);
+    if (saveCord) this.coords = JSON.parse(saveCord);
   },
   watch: {
     input(i) {
       localStorage.setItem('input', i);
       if (i) {
         const newCord = this.data.get(i);
-        this.cord = newCord;
-        localStorage.setItem('cord', JSON.stringify(newCord));
+        this.coords = newCord;
+        localStorage.setItem('coords', JSON.stringify(newCord));
       };
     }
   },
