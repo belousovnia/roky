@@ -1,11 +1,26 @@
 <template>
   <v-app class="app">
+      <button class="button-theme" @click="() => switchTheme(!theme)">
+        <SunSvg :class="'sun-svg'"/>
+      </button>
+      <div class="alert" v-if="!resolution">
+        <v-alert
+          dense
+          outlined
+          type="error"
+        >
+          Разрешите доступ к местоположению!
+        </v-alert>
+      </div>
     <main class="main"> 
+      
       <div class="container">
         <v-autocomplete 
           class="input"
           v-model="input"
-          :items="city"
+          :items="city" 
+          :dark="theme"
+          @change="selectCity"
         >
 
         </v-autocomplete>
@@ -20,6 +35,9 @@
             :coords="coords"
           />
         </yandex-map>
+        <v-btn class="button-geo" @click="definitionPosition">
+          Где я? 
+        </v-btn>
       </div>
     </main>
   </v-app>
@@ -27,16 +45,19 @@
 
 <script>
 import { yandexMap, ymapMarker } from 'vue-yandex-maps';
-import dataCity from './city.json'
+import dataCity from './city.json';
+import SunSvg from './components/SunSvg';
+import axios from 'axios';
 
 export default {
   name: 'App', 
-  components: { yandexMap, ymapMarker },
+  components: { yandexMap, ymapMarker, SunSvg },
   data: () => ({
     city: null,
-    input: null,
+    input: 'Москва',
     coords: ["55.7538789","37.6203735"],
     data: null,
+    apiKeyIp: '774dfe21d3bef21d19174447f55bfa8aad325353',
     settings: {
       apiKey: '5f6e7a79-975f-48f8-8438-b45713ff6a84',
       lang: 'ru_RU',
@@ -44,6 +65,8 @@ export default {
       enterprise: false,
       version: '2.1'
     },
+    theme: false,
+    resolution: true,
   }),
   mounted() {
     this.data = dataCity.reduce((previous, current) => {
@@ -55,27 +78,100 @@ export default {
 
     const saveInput =  localStorage.getItem('input');
     const saveCord =  localStorage.getItem('coords');
-    
+    const saveTheme =  JSON.parse(localStorage.getItem('theme'));
+
     if (saveInput) this.input = saveInput;
     if (saveCord) this.coords = JSON.parse(saveCord);
+    if (saveTheme !== null) this.switchTheme(saveTheme);
+
+    this.definitionPosition();
   },
-  watch: {
-    input(i) {
-      localStorage.setItem('input', i);
-      if (i) {
-        const newCord = this.data.get(i);
+  methods: {
+    selectCity() {
+      localStorage.setItem('input', this.input);
+      if (this.input) {
+        const newCord = this.data.get(this.input);
         this.coords = newCord;
         localStorage.setItem('coords', JSON.stringify(newCord));
       };
-    }
-  },
+    },
+    switchTheme(themeOn) {
+      const html = document.querySelector('html');
+      if (themeOn) {
+        html.style.setProperty('--main-color', '#373737');
+        html.style.setProperty('--svg-color', '#f4f4f4');
+      } else {
+        html.style.setProperty('--main-color', '#f4f4f4');
+        html.style.setProperty('--svg-color', '#111111');
+      };
+      localStorage.setItem('theme', themeOn);
+      this.theme = themeOn;
+    },
+    definitionPosition() {
+      this.resolution = true;
+      navigator.geolocation.getCurrentPosition((position) => {
+      const newCord = [position.coords.latitude, position.coords.longitude];
+      this.coords = newCord;
+      localStorage.setItem('coords', JSON.stringify(newCord));
+
+      axios
+        .get('https://ipapi.co/json/')
+        .then(r => this.definitionCity(r.data.ip));
+      },
+      () => this.resolution = false
+      );
+    },
+    definitionCity(ip) {
+      const headers = {
+        "Authorization": "Token " + this.apiKeyIp
+      };
+
+      axios
+        .get('https://suggestions.dadata.ru/suggestions/api/4_1/rs/iplocate/address', {
+          params: {'ip': ip},
+          headers
+        }).then(r => {
+          this.input = r.data.location.data.city
+          localStorage.setItem('input', this.input);
+        });
+    },
+  }
 };
 </script>
 
 <style lang="css">
+
+  :root {
+    --main-color: #f4f4f4;
+    --svg-color: #111111;
+  }
+
+  html {
+    overflow: hidden;
+  }
+
   .app {
     width: 100%;
     height: 100%;
+  }
+
+  .alert {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .button-theme {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    width: 24px;
+    height: 24px;
+  }
+
+  .sun-svg {
+    fill: var(--svg-color);
   }
 
   .main {
@@ -84,6 +180,8 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    background-color: var(--main-color);
+    transition: background-color 0.3s ease;
   }
 
   .container {
@@ -99,5 +197,10 @@ export default {
     width: 100%;
     margin-bottom: 50px;
   }
+
+  .button-geo {
+    margin-top: 16px;
+  }
+
 </style>
 
