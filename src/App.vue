@@ -49,6 +49,8 @@ import dataCity from './city.json';
 import SunSvg from './components/SunSvg';
 import axios from 'axios';
 
+const apiKeyYandex = '5f6e7a79-975f-48f8-8438-b45713ff6a84';
+
 export default {
   name: 'App', 
   components: { yandexMap, ymapMarker, SunSvg },
@@ -57,9 +59,9 @@ export default {
     input: 'Москва',
     coords: ["55.7538789","37.6203735"],
     data: null,
-    apiKeyIp: '774dfe21d3bef21d19174447f55bfa8aad325353',
+    apiKey: apiKeyYandex,
     settings: {
-      apiKey: '5f6e7a79-975f-48f8-8438-b45713ff6a84',
+      apiKey: apiKeyYandex,
       lang: 'ru_RU',
       coordorder: 'latlong',
       enterprise: false,
@@ -115,25 +117,19 @@ export default {
       localStorage.setItem('coords', JSON.stringify(newCord));
 
       axios
-        .get('https://ipapi.co/json/')
-        .then(r => this.definitionCity(r.data.ip));
+        .get('https://geocode-maps.yandex.ru/1.x/', {
+          params: {
+            'apikey': this.apiKey,
+            'geocode': `${newCord[1]},${newCord[0]}`,
+            'kind': 'locality',
+            'format': 'json',
+            'results': 1,
+          }
+        })
+        .then(r => {this.input = (r.data.response.GeoObjectCollection.featureMember[0].GeoObject.name)});
       },
       () => this.resolution = false
       );
-    },
-    definitionCity(ip) {
-      const headers = {
-        "Authorization": "Token " + this.apiKeyIp
-      };
-
-      axios
-        .get('https://suggestions.dadata.ru/suggestions/api/4_1/rs/iplocate/address', {
-          params: {'ip': ip},
-          headers
-        }).then(r => {
-          this.input = r.data.location.data.city
-          localStorage.setItem('input', this.input);
-        });
     },
   }
 };
