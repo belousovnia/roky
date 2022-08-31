@@ -126,7 +126,11 @@ export default {
             'results': 1,
           }
         })
-        .then(r => {this.input = (r.data.response.GeoObjectCollection.featureMember[0].GeoObject.name)});
+        .then(r => {
+          const newCity = r.data.response.GeoObjectCollection.featureMember[0].GeoObject.name;
+          this.input = newCity;
+          localStorage.setItem('input', newCity);
+        });
       },
       () => this.resolution = false
       );
